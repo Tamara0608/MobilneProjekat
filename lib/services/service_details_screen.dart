@@ -51,12 +51,13 @@ class ServiceDetailsScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                '${service.title} tretmani',
+                service.title,
                 style: const TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
-                ),
-              ),
+                  ),
+                  ),
+
             ),
             const SizedBox(height: 10),
             Padding(
@@ -131,9 +132,9 @@ class ServiceDetailsScreen extends StatelessWidget {
             ],
 
             // utisci
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 18),
-              child: _InfoPanel(),
+            Padding(
+              padding:const EdgeInsets.fromLTRB(16, 8, 16, 18),
+             child: _InfoPanel(review: _reviewFor(service)),
             ),
 
             // footer
@@ -142,6 +143,7 @@ class ServiceDetailsScreen extends StatelessWidget {
         ),
       ),
     );
+    
   }
 
   // PODVRSTE 
@@ -173,9 +175,105 @@ class ServiceDetailsScreen extends StatelessWidget {
         ),
       ];
     }
+    if (s.title == 'Tretman lica') {
+  return const [
+    _SubService(
+      title: 'Higijenski tretman lica',
+      duration: '60–90 min',
+      text: 'Dubinsko čišćenje, uklanjanje nečistoća i umirenje kože.',
+    ),
+    _SubService(
+      title: 'Dermaplaning',
+      duration: '45–60 min',
+      text: 'Eksfolijacija i uklanjanje mrtvih ćelija za glatku i sjajnu kožu.',
+    ),
+    _SubService(
+      title: 'Karbonski piling',
+      duration: '45–60 min',
+      text: 'Tretman za pore i teksturu kože uz svež i čist izgled.',
+    ),
+  ];
+}
+if (s.title == 'Trepavice') {
+  return const [
+    _SubService(
+      title: 'Klasik',
+      duration: '90–120 min',
+      text: 'Prirodan izgled – jedna ekstenzija na jednu trepavicu.',
+    ),
+    _SubService(
+      title: 'Volume 2D–3D',
+      duration: '120–150 min',
+      text: 'Puniji izgled uz lagane lepeze za mek rezultat.',
+    ),
+    _SubService(
+      title: 'Lash Lift',
+      duration: '45–60 min',
+      text: 'Podizanje i uvijanje prirodnih trepavica uz dugotrajan efekat.',
+    ),
+  ];
+}
+
 
     return const [];
   }
+_Review _reviewFor(Service s) {
+  switch (s.title) {
+    case 'Obrve':
+      return const _Review(
+        headline: 'Naši klijenti',
+        text: 'Obrve su ispale savršeno prirodno. Precizno i uredno.',
+        author: '— Milica',
+      );
+
+    case 'Tretman lica':
+      return const _Review(
+        headline: 'Utisci',
+        text: 'Koža je posle tretmana čistija i sjajnija. Veoma prijatan tretman!',
+        author: '— Ivana',
+      );
+
+    case 'Trepavice':
+      return const _Review(
+        headline: 'Utisci',
+        text: 'Trepavice su lagane, uredne i izgledaju prelepo. Efekat je top!',
+        author: '— Ana',
+      );
+
+    case 'Masaža':
+      return const _Review(
+        headline: 'Utisci',
+        text: 'Opuštajuće i profesionalno. Odmah sam se osećala lakše i mirnije.',
+        author: '— Marija',
+      );
+
+    case 'Nokti':
+      return const _Review(
+        headline: 'Utisci',
+        text: 'Manikir je detaljan i uredan, a rezultat traje dugo. Prezadovoljna!',
+        author: '— Jelena',
+      );
+
+    default:
+      return const _Review(
+        headline: 'Utisci',
+        text: 'Profesionalno i veoma kvalitetno iskustvo.',
+        author: '— Katarina',
+      );
+  }
+}
+
+}
+class _Review {
+  final String headline;
+  final String text;
+  final String author;
+
+  const _Review({
+    required this.headline,
+    required this.text,
+    required this.author,
+  });
 }
 
 class _SubService {
@@ -305,7 +403,9 @@ class _AvailabilityCard extends StatelessWidget {
 }
 
 class _InfoPanel extends StatelessWidget {
-  const _InfoPanel();
+   final _Review review;
+
+    const _InfoPanel({required this.review});
 
   @override
   Widget build(BuildContext context) {
@@ -315,13 +415,13 @@ class _InfoPanel extends StatelessWidget {
         color: Colors.black,
         borderRadius: BorderRadius.circular(22),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Utisci', style: TextStyle(color: Colors.white70)),
           SizedBox(height: 8),
           Text(
-            'Naši klijenti',
+            review.headline,
             style: TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -330,12 +430,12 @@ class _InfoPanel extends StatelessWidget {
           ),
           SizedBox(height: 10),
           Text(
-            'Sve preporuke! Tretman je bio profesionalan i veoma prijatan.',
+            review.text,
             style: TextStyle(color: Colors.white70),
           ),
           SizedBox(height: 14),
           Text(
-            '— Olivera',
+          review.author,
             style: TextStyle(color: Colors.white),
           ),
         ],

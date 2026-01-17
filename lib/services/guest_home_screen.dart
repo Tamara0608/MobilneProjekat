@@ -26,10 +26,7 @@ class GuestHomeScreen extends StatelessWidget {
             return ServiceCard(
               service: s,
               onMore: () {
-                //obrve
-                final isBrows = s.title.toLowerCase().contains('obrve');
-                if (!isBrows) return;
-
+          
                 Navigator.push(
                   context,
                   MaterialPageRoute(
