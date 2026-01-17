@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/services_data.dart';
 import '../widgets/service_card.dart';
+import '../services/service_details_screen.dart';
 
 class GuestHomeScreen extends StatelessWidget {
   const GuestHomeScreen({super.key});
@@ -21,10 +22,23 @@ class GuestHomeScreen extends StatelessWidget {
           ),
           itemBuilder: (context, index) {
             final s = services[index];
+
             return ServiceCard(
               service: s,
               onMore: () {
-                
+                //obrve
+                final isBrows = s.title.toLowerCase().contains('obrve');
+                if (!isBrows) return;
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ServiceDetailsScreen(
+                      service: s,
+                      isGuest: true, //ako je gost treba poruka za log
+                    ),
+                  ),
+                );
               },
             );
           },
