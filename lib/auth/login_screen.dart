@@ -1,7 +1,7 @@
-// login_screen.dart
 import 'package:flutter/material.dart';
+import '../core/router/app_router.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   final String? infoMessage;
 
   const LoginScreen({
@@ -9,64 +9,193 @@ class LoginScreen extends StatelessWidget {
     this.infoMessage,
   });
 
-  static const Color _bg = Color(0xFFFFF1F4);
+  static const Color _bg = Color(0xFFFFEEF3);
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+
+  bool _obscure = true;
+
+  @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
+
+  bool _isValidEmail(String email) {
+    // validacija za mejl
+    final pattern = RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w]{2,}$');
+    return pattern.hasMatch(email);
+  }
+
+  bool _isStrongPassword(String pass) {
+    // ograničenja za lozinku
+    final hasUpper = RegExp(r'[A-Z]').hasMatch(pass);
+    final hasLower = RegExp(r'[a-z]').hasMatch(pass);
+    final hasDigit = RegExp(r'\d').hasMatch(pass);
+    final hasSpecial =
+        RegExp(r'[!@#$%^&*(),.?":{}|<>_\-\\/\[\]~`+=;]').hasMatch(pass);
+    return pass.length >= 8 && hasUpper && hasLower && hasDigit && hasSpecial;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: LoginScreen._bg,
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: LoginScreen._bg,
         elevation: 0,
-        title: const Text('Prijava / Registracija'),
+        title: const Text('Prijava'),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const SizedBox(height: 10),
+            const SizedBox(height: 50),
 
-            // ✅ poruka se prikazuje SAMO kad postoji (dakle kad si gost i klikneš Izaberi)
-            if (infoMessage != null)
+            // poruka kad gost pokuša da zakaže
+            if (widget.infoMessage != null) ...[
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: Colors.black.withValues(alpha: 0.06),
                   ),
                 ),
                 child: Text(
-                  infoMessage!,
+                  widget.infoMessage!,
                   style: const TextStyle(fontSize: 14, height: 1.35),
                 ),
               ),
+              const SizedBox(height: 16),
+            ],
 
-            if (infoMessage != null) const SizedBox(height: 16),
-
-            SizedBox(
+            // kartica sa login formom
+            Container(
               width: double.infinity,
-              height: 44,
-              child: ElevatedButton(
-                onPressed: () {
-                  
-                },
-                child: const Text('Prijavi se'),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: Colors.black.withValues(alpha: 0.06),
+                ),
               ),
-            ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Welcome back 🌸',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
 
-            const SizedBox(height: 10),
+                    // email
+                    TextFormField(
+                      controller: _emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: _inputDecoration('Email'),
+                      validator: (value) {
+                        final v = (value ?? '').trim();
+                        if (v.isEmpty) return 'Email je obavezan';
+                        if (!_isValidEmail(v)) {
+                          return 'Email mora biti u formatu naziv@domen.com';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
 
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: OutlinedButton(
-                onPressed: () {
-                  
-                },
-                child: const Text('Registruj se'),
+                    //loz
+                    TextFormField(
+                      controller: _passCtrl,
+                      obscureText: _obscure,
+                      decoration: _inputDecoration(
+                        'Lozinka',
+                        suffix: IconButton(
+                          icon: Icon(
+                            _obscure ? Icons.visibility_off : Icons.visibility,
+                          ),
+                          onPressed: () => setState(() => _obscure = !_obscure),
+                        ),
+                      ),
+                      validator: (value) {
+                        final v = value ?? '';
+                        if (v.isEmpty) return 'Lozinka je obavezna';
+
+                        if (!_isStrongPassword(v)) {
+                          return 'Lozinka mora imati najmanje 8 karaktera i sadržati: veliko slovo, malo slovo, broj i specijalan karakter.';
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Podaci su validni ✔')),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                        ),
+                        child: const Text(
+                          'Prijavi se',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    //link za reg
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('Nemaš nalog? '),
+                        GestureDetector(
+                          onTap: () =>
+                              Navigator.pushNamed(context, AppRouter.register),
+                          child: const Text(
+                            'Registruj se',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -74,4 +203,29 @@ class LoginScreen extends StatelessWidget {
       ),
     );
   }
+
+InputDecoration _inputDecoration(String hint, {Widget? suffix}) {
+  return InputDecoration(
+    hintText: hint,
+    suffixIcon: suffix,
+    filled: true,
+    fillColor: const Color(0xFFFFF8FA),
+
+  
+    errorMaxLines: 3,
+
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(
+        color: Colors.black.withValues(alpha: 0.08),
+      ),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(
+        color: Colors.black.withValues(alpha: 0.08),
+      ),
+    ),
+  );
+}
 }

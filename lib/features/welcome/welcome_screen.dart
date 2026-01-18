@@ -68,10 +68,7 @@ class WelcomeScreen extends StatelessWidget {
                     height: 52,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          AppRouter.login,
-                        );
+                       Navigator.pushNamed(context, AppRouter.login);
                       },
                       child: const Text(
                         'Uloguj se',
