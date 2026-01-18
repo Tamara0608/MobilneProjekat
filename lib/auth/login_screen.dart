@@ -152,6 +152,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 48,
                       child: ElevatedButton(
                         onPressed: () {
+                          
+                          FocusScope.of(context).unfocus();
                           if (_formKey.currentState!.validate()) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Podaci su validni ✔')),
