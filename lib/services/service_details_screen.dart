@@ -213,8 +213,28 @@ if (s.title == 'Trepavice') {
     ),
   ];
 }
-
-
+if (s.title.toLowerCase().contains('masa')) {
+  return const [
+    _SubService(
+      title: 'Terapeutska masaža',
+      duration: '30 min',
+      text:
+          'Ciljano tretiranje problematičnih regija u skladu sa individualnim potrebama klijenta.',
+    ),
+    _SubService(
+      title: 'Masaža dubokog tkiva',
+      duration: '30 min',
+      text:
+          'Dubinska tehnika koja pomaže u otklanjanju jakih mišićnih napetosti i hroničnih bolova.',
+    ),
+    _SubService(
+      title: 'Relax antistres masaža',
+      duration: '30 ili 60 min',
+      text:
+          'Blaga relaksaciona masaža namenjena opuštanju i smanjenju svakodnevnog stresa.',
+    ),
+  ];
+}
     return const [];
   }
 _Review _reviewFor(Service s) {
