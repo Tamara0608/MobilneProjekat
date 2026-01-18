@@ -235,6 +235,40 @@ if (s.title.toLowerCase().contains('masa')) {
     ),
   ];
 }
+if (s.title == 'Nokti' || s.title.toLowerCase().contains('nok')) {
+  return const [
+    _SubService(
+      title: 'Manikir',
+      duration: '30 minuta',
+      text:
+          'Lepi, jaki i zdravi prirodni nokti su osnova savršenog manikira. '
+          'Prirodna lepota ruku i noktiju zavisi od zdravlja, godina i spoljašnjih uticaja, '
+          'a najviše od redovne nege. Anti-Age Hand & Nail Care tretman štiti kožu i nokte '
+          'i usporava proces starenja.',
+    ),
+    _SubService(
+      title: 'LongWear',
+      duration: '30 minuta',
+      text:
+          'LongWear je standard lepote. Dugotrajan lak sa revolucionarnom 1-2-3 tehnologijom '
+          'koja obezbeđuje postojanu boju i sjaj. Idealno za uredne nokte savršenog kvaliteta.',
+    ),
+    _SubService(
+      title: 'Gel lak',
+      duration: '60 minuta',
+      text:
+          'Gel lak tehnika pruža besprekoran izgled, jake i uredne nokte sa prirodnim efektom. '
+          'Rad sa savremenim gelovima visokih performansi omogućava dugotrajan i elegantan rezultat.',
+    ),
+    _SubService(
+      title: 'Hard Ultra Thin',
+      duration: '60 minuta',
+      text:
+          'Savršeno rešenje za poznavaoce finih tehnika. Omogućava ojačavanje prirodnih noktiju '
+          'koji će postati jaki i otporni. Elegantan i prefinjen izgled.',
+    ),
+  ];
+}
     return const [];
   }
 _Review _reviewFor(Service s) {
