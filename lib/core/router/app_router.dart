@@ -15,6 +15,6 @@ class AppRouter {
     welcome: (_) => const WelcomeScreen(),
     login: (_) => const LoginScreen(),
     register: (_) => const RegisterScreen(),
-    guestHome: (_) => const GuestHomeScreen(),
+    guestHome: (_) => const GuestHomeScreen(isGuest: true),
   };
 }

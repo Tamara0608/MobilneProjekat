@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/router/app_router.dart';
+import '../core/session/app_session.dart';
+import '../services/guest_home_screen.dart'; 
+
 
 class LoginScreen extends StatefulWidget {
   final String? infoMessage;
@@ -155,11 +158,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           
                           FocusScope.of(context).unfocus();
                           if (_formKey.currentState!.validate()) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Podaci su validni ✔')),
+                           
+                           final email = _emailCtrl.text.trim();
+                            UserRole role = UserRole.user;
+                            if (email.toLowerCase() == 'admin@smartbooking.rs') role = UserRole.admin;
+                            if (email.toLowerCase() == 'zaposleni@smartbooking.rs') role = UserRole.employee;
+                             
+                             AppSession.login(role, userEmail: email, name: 'Tamara',);
+                             
+                             Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const GuestHomeScreen(isGuest: false),
+                              ),
                             );
-                          }
-                        },
+                          }        
+                       },
                         style: ElevatedButton.styleFrom(
                           elevation: 0,
                           shape: RoundedRectangleBorder(

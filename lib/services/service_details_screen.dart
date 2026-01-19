@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'service.dart';
 import '../auth/login_screen.dart';
+import '../appointments/booking_screen.dart';
 
 class ServiceDetailsScreen extends StatelessWidget {
   final Service service;
@@ -30,7 +31,7 @@ class ServiceDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // hero slika
+            
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: ClipRRect(
@@ -47,7 +48,7 @@ class ServiceDetailsScreen extends StatelessWidget {
 
             const SizedBox(height: 18),
 
-            // naslov + opis
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
@@ -81,8 +82,7 @@ class ServiceDetailsScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 22),
-
-            // PODVRSTE 
+ 
             if (items.isNotEmpty) ...[
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
@@ -123,8 +123,16 @@ class ServiceDetailsScreen extends StatelessWidget {
                         );
                         return;
                       }
-
-                    
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BookingScreen(
+                            serviceTitle: service.title,
+                            subServiceTitle: it.title,
+                            duration: it.duration,
+                          ),
+                        ),
+                      );
                     },
                   );
                 },

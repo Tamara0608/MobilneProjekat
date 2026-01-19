@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/router/app_router.dart';
+import '../core/session/app_session.dart';
+import '../services/guest_home_screen.dart';
+
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -193,18 +196,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: () {
-                           FocusScope.of(context).unfocus();
-                          if (_formKey.currentState!.validate()) {
-                       
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Registracija validna ✔ (demo)'),
-                              ),
-                            );
+                       onPressed: () {
+                        FocusScope.of(context).unfocus();
+                        if (_formKey.currentState!.validate()) {
 
-                          }
-                        },
+                          AppSession.login(
+                            UserRole.user,
+                            userEmail: _emailCtrl.text.trim(),
+                            name: _firstNameCtrl.text.trim(),
+                          );
+
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const GuestHomeScreen(isGuest: false),
+                            ),
+                          );
+                        }
+                      },
+
                         style: ElevatedButton.styleFrom(
                           elevation: 0,
                           shape: RoundedRectangleBorder(
