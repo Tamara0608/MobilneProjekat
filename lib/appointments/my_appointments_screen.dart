@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/session/app_session.dart';
 import 'booking_screen.dart';
+import '../widgets/empty_state.dart';
+
 
 class MyAppointmentsScreen extends StatefulWidget {
   const MyAppointmentsScreen({super.key});
@@ -24,10 +26,8 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
         elevation: 0,
         title: const Text('Moji termini'),
       ),
-      body: items.isEmpty
-          ? const Center(
-              child: Text('Nema zakazanih termina (demo).'),
-            )
+        body: items.isEmpty
+          ? const EmptyState(message: 'Nema zakazanih termina (demo).')
           : ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: items.length,

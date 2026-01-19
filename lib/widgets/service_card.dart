@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/service.dart';
+import 'primary_outlined_button.dart';
 
 class ServiceCard extends StatelessWidget {
   final Service service;
@@ -54,14 +55,10 @@ class ServiceCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  height: 40,
-                  child: OutlinedButton(
-                    onPressed: onMore,
-                    child: const Text('Više o tretmanu'),
-                  ),
-                ),
+              PrimaryOutlinedButton(
+                text: 'Više o tretmanu',
+                onPressed: onMore,
+              ),
               ],
             ),
           ),
