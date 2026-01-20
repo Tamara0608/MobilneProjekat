@@ -61,7 +61,20 @@ class WelcomeScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 36),
-
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRouter.guestHome);
+                    },
+                    child: const Text(
+                      'Nastavi kao gost',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
                   /// Dugme: Uloguj se
                   SizedBox(
                     width: double.infinity,
@@ -76,26 +89,21 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 12),
 
-                  const SizedBox(height: 14),
-
-                  /// Dugme: Nastavi kao gost
                   SizedBox(
                     width: double.infinity,
                     height: 52,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          AppRouter.guestHome,
-                        );
+                        Navigator.pushNamed(context, AppRouter.register);
                       },
                       child: const Text(
-                        'Nastavi kao gost',
+                        'Registruj se',
                         style: TextStyle(fontSize: 16),
                       ),
                     ),
-                  ),
+                  ),     
                 ],
               ),
             ),
