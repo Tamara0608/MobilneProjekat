@@ -31,8 +31,16 @@ class GuestHomeScreen extends StatelessWidget {
                     Tab(text: 'Moji termini'),
                   ],
                 ),
-          actions: [
-            if (!isGuest)
+
+                  actions: [
+            if (!isGuest) ...[
+              IconButton(
+                icon: const Icon(Icons.person_outline),
+                tooltip: 'Moj profil',
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRouter.editProfile);
+                },
+              ),
               IconButton(
                 icon: const Icon(Icons.logout),
                 tooltip: 'Odjavi se',
@@ -45,6 +53,7 @@ class GuestHomeScreen extends StatelessWidget {
                   );
                 },
               ),
+            ],
           ],
         ),
         body: isGuest
