@@ -9,31 +9,42 @@ import '../widgets/section_title.dart';
 
 class GuestHomeScreen extends StatelessWidget {
   final bool isGuest;
+  final bool showAppointmentsTab;
+  final bool showTopActions;
 
   const GuestHomeScreen({
     super.key,
     required this.isGuest,
+    this.showAppointmentsTab = true,
+    this.showTopActions = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    final hasTabs = (!isGuest) && showAppointmentsTab;
+
+    final titleText = isGuest
+        ? 'Gost'
+        : (hasTabs
+            ? 'Zdravo, ${AppSession.firstName ?? 'korisniče'}'
+            : 'Ponude');
+
     return DefaultTabController(
-      length: isGuest ? 1 : 2,
+      length: hasTabs ? 2 : 1,
       child: Scaffold(
         appBar: AppBar(
-        automaticallyImplyLeading: isGuest,
-          title: Text(isGuest ? 'Gost' :'Zdravo, ${AppSession.firstName ?? 'korisniče'}',),
-          bottom: isGuest
-              ? null
-              : const TabBar(
+          automaticallyImplyLeading: isGuest,
+          title: Text(titleText),
+          bottom: hasTabs
+              ? const TabBar(
                   tabs: [
                     Tab(text: 'Ponude'),
                     Tab(text: 'Moji termini'),
                   ],
-                ),
-
-                  actions: [
-            if (!isGuest) ...[
+                )
+              : null,
+          actions: [
+            if (!isGuest && showTopActions) ...[
               IconButton(
                 icon: const Icon(Icons.person_outline),
                 tooltip: 'Moj profil',
@@ -57,64 +68,77 @@ class GuestHomeScreen extends StatelessWidget {
           ],
         ),
         body: isGuest
-            ? _PonudeTab(isGuest: isGuest)
-            : const TabBarView(
-                children: [
-                  _PonudeTab(isGuest: false),
-                  MyAppointmentsScreen(),
-                ],
-              ),
+            ? const _PonudeTab(isGuest: true)
+            : (hasTabs
+                ? const TabBarView(
+                    children: [
+                      _PonudeTab(isGuest: false),
+                      MyAppointmentsScreen(),
+                    ],
+                  )
+                : const _PonudeTab(isGuest: false)),
       ),
     );
   }
 }
+
 class _PonudeTab extends StatelessWidget {
   final bool isGuest;
 
   const _PonudeTab({required this.isGuest});
 
   @override
-Widget build(BuildContext context) {
-  return Padding(
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (isGuest) ...[
-          const SectionTitle(text: 'Ponude'),
-          const SizedBox(height: 8),
-        ],
+  Widget build(BuildContext context) {
+    final visibleServices = services.where((s) => !s.isDeleted).toList(); //admin moze vratiti iz smeca
 
-        Expanded(
-          child: GridView.builder(
-            itemCount: services.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              childAspectRatio: 0.72,
-            ),
-            itemBuilder: (context, index) {
-              final s = services[index];
-              return ServiceCard(
-                service: s,
-                onMore: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ServiceDetailsScreen(
-                        service: s,
-                        isGuest: isGuest,
-                      ),
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isGuest) ...[
+            const SectionTitle(text: 'Ponude'),
+            const SizedBox(height: 8),
+          ],
+          Expanded(
+            child: visibleServices.isEmpty
+                ? const Center(
+                    child: Text(
+                      'Trenutno nema dostupnih ponuda.',
+                      style: TextStyle(fontWeight: FontWeight.w800),
                     ),
-                  );
-                },
-              );
-            },
+                  )
+                : GridView.builder(
+                    itemCount: visibleServices.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 14,
+                      mainAxisSpacing: 14,
+                      childAspectRatio: 0.72,
+                    ),
+                    itemBuilder: (context, index) {
+                      final s = visibleServices[index];
+
+                      return ServiceCard(
+                        service: s,
+                        onMore: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ServiceDetailsScreen(
+                                service: s,
+                                isGuest: isGuest,
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 }

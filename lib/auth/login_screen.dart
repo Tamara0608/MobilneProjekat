@@ -22,9 +22,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
-
+// da li je lozinka skrivena
   bool _obscure = true;
-
+//cisti memoriju
   @override
   void dispose() {
     _emailCtrl.dispose();
@@ -56,7 +56,8 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: LoginScreen._bg,
         elevation: 0,
         title: const Text('Prijava'),
-      ),
+      ), 
+      //omogucava skrol
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -164,14 +165,23 @@ class _LoginScreenState extends State<LoginScreen> {
                             if (email.toLowerCase() == 'admin@smartbooking.rs') role = UserRole.admin;
                             if (email.toLowerCase() == 'zaposleni@smartbooking.rs') role = UserRole.employee;
                              
-                             AppSession.login(role, userEmail: email, name: 'Tamara',);
-                             
-                             Navigator.pushReplacement(
+                          AppSession.login(
+                            role,
+                            userEmail: email,
+                            name: 'Tamara',
+                          );
+
+                          if (role == UserRole.admin) {
+                            Navigator.pushReplacementNamed(context, AppRouter.adminHome);
+                          } else {
+                            Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const GuestHomeScreen(isGuest: false),
                               ),
                             );
+                          }
+
                           }        
                        },
                         style: ElevatedButton.styleFrom(

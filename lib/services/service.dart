@@ -3,9 +3,16 @@ class Service {
   final String imagePath;
   final String description;
 
-  const Service({
-    required this.title,
-    required this.imagePath,
-    required this.description,
+  int priceRsd;
+  final String duration;
+  bool isDeleted;
+
+  Service({
+  required this.title,
+  required this.imagePath,
+  required this.description,
+  required this.priceRsd,
+  required this.duration,
+  this.isDeleted = false,
   });
 }

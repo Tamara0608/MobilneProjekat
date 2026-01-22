@@ -27,7 +27,7 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
         title: const Text('Moji termini'),
       ),
         body: items.isEmpty
-          ? const EmptyState(message: 'Nema zakazanih termina (demo).')
+          ? const EmptyState(message: 'Nema zakazanih termina.')
           : ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: items.length,

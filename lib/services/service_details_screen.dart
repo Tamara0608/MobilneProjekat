@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'service.dart';
 import '../auth/login_screen.dart';
 import '../appointments/booking_screen.dart';
+import '../core/session/app_session.dart';
+
 
 class ServiceDetailsScreen extends StatelessWidget {
   final Service service;
@@ -18,7 +20,7 @@ class ServiceDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = _subServicesFor(service);
+    final items = _subServicesFor(service); //lista podvrsta
 
     return Scaffold(
       backgroundColor: _bg,
@@ -38,8 +40,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(22),
                 child: AspectRatio(
                   aspectRatio: 16 / 10,
-                  child: Image.asset(
-                    service.imagePath,
+                  child: Image.asset(service.imagePath,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -105,11 +106,15 @@ class ServiceDetailsScreen extends StatelessWidget {
                 itemBuilder: (context, i) {
                   final it = items[i];
 
+                  final isAdmin = AppSession.role == UserRole.admin;
+                  
                   return _SubServiceCard(
                     title: it.title,
                     duration: it.duration,
                     text: it.text,
+                    isAdmin: isAdmin,
                     onTap: () {
+                      if (AppSession.role == UserRole.admin) return;
                       // ako je gost da ga vodi na ekran da se mora prijaviti za zakazivanje
                       if (isGuest) {
                         Navigator.push(
@@ -355,12 +360,14 @@ class _SubServiceCard extends StatelessWidget {
   final String duration;
   final String text;
   final VoidCallback onTap;
+  final bool isAdmin;
 
   const _SubServiceCard({
     required this.title,
     required this.duration,
     required this.text,
     required this.onTap,
+    required this.isAdmin,
   });
 
   @override
@@ -419,6 +426,7 @@ class _SubServiceCard extends StatelessWidget {
               style: const TextStyle(fontSize: 13, height: 1.35),
             ),
             const SizedBox(height: 12),
+            if (!isAdmin)
             Align(
               alignment: Alignment.centerRight,
               child: Text(

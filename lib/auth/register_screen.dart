@@ -200,7 +200,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         FocusScope.of(context).unfocus();
                         if (_formKey.currentState!.validate()) {
 
-                          AppSession.login(
+                          AppSession.login( //prijavljuje korisnika
                             UserRole.user,
                             userEmail: _emailCtrl.text.trim(),
                             name: _firstNameCtrl.text.trim(),
