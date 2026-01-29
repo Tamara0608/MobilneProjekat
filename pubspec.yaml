@@ -12,6 +12,8 @@ dependencies:
     sdk: flutter
   
   cupertino_icons: ^1.0.8
+  cloud_firestore: ^6.1.2
+  firebase_core: ^4.4.0
   # (po potrebi kasnije) go_router: ^14.0.0
 
 dev_dependencies:
