@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import '../services/services_data.dart';
 import '../widgets/service_card.dart';
 import '../services/service_details_screen.dart';
 import '../appointments/my_appointments_screen.dart';
 import '../core/session/app_session.dart';
 import '../core/router/app_router.dart';
 import '../widgets/section_title.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/service.dart';
 
 class GuestHomeScreen extends StatelessWidget {
   final bool isGuest;
@@ -89,56 +90,77 @@ class _PonudeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visibleServices = services.where((s) => !s.isDeleted).toList(); //admin moze vratiti iz smeca
+    return StreamBuilder<QuerySnapshot>(
+     
+      stream: FirebaseFirestore.instance
+          .collection('usluge')
+          .where('isDeleted', isEqualTo: false)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) return const Center(child: Text('Greška pri učitavanju.'));
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (isGuest) ...[
-            const SectionTitle(text: 'Ponude'),
-            const SizedBox(height: 8),
-          ],
-          Expanded(
-            child: visibleServices.isEmpty
-                ? const Center(
-                    child: Text(
-                      'Trenutno nema dostupnih ponuda.',
-                      style: TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                  )
-                : GridView.builder(
-                    itemCount: visibleServices.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 14,
-                      mainAxisSpacing: 14,
-                      childAspectRatio: 0.72,
-                    ),
-                    itemBuilder: (context, index) {
-                      final s = visibleServices[index];
+        final docs = snapshot.data!.docs;
+       
+        final visibleServices = docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return Service(
+            title: data['title'] ?? '',
+            description: data['description'] ?? '',
+            priceRsd: data['priceRsd'] ?? 0,
+            duration: data['duration'] ?? '',
+            imagePath: data['imagePath'] ?? '',
+          );
+        }).toList();
 
-                      return ServiceCard(
-                        service: s,
-                        onMore: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ServiceDetailsScreen(
-                                service: s,
-                                isGuest: isGuest,
-                              ),
-                            ),
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isGuest) ...[
+                const SectionTitle(text: 'Ponude'),
+                const SizedBox(height: 8),
+              ],
+              Expanded(
+                child: visibleServices.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Trenutno nema dostupnih ponuda.',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      )
+                    : GridView.builder(
+                        itemCount: visibleServices.length,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: 0.72,
+                        ),
+                        itemBuilder: (context, index) {
+                          final s = visibleServices[index];
+                          return ServiceCard(
+                            service: s,
+                            onMore: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ServiceDetailsScreen(
+                                    service: s,
+                                    isGuest: isGuest,
+                                  ),
+                                ),
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                  ),
+                      ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

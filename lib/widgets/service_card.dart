@@ -1,3 +1,4 @@
+import 'dart:io'; 
 import 'package:flutter/material.dart';
 import '../services/service.dart';
 import 'primary_outlined_button.dart';
@@ -24,10 +25,7 @@ class ServiceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: Image.asset(
-              service.imagePath,
-              fit: BoxFit.cover,
-            ),
+            child: _buildImage(service.imagePath), 
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
@@ -55,15 +53,46 @@ class ServiceCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-              PrimaryOutlinedButton(
-                text: 'Više o tretmanu',
-                onPressed: onMore,
-              ),
+                PrimaryOutlinedButton(
+                  text: 'Više o tretmanu',
+                  onPressed: onMore,
+                ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildImage(String path) {
+    if (path.isEmpty) {
+      return const Center(child: Icon(Icons.image_not_supported, size: 40, color: Colors.grey));
+    }
+
+
+    if (path.startsWith('/') || path.contains('com.example')) {
+      final file = File(path);
+      if (file.existsSync()) {
+        return Image.file(
+          file,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return const Center(child: Icon(Icons.broken_image, color: Colors.grey));
+          },
+        );
+      } else {
+     
+        return const Center(child: Icon(Icons.image_not_supported, color: Colors.grey));
+      }
+    }
+
+    return Image.asset(
+      path,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return const Center(child: Icon(Icons.broken_image, color: Colors.grey));
+      },
     );
   }
 }

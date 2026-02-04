@@ -9,6 +9,7 @@ import '../../admin/admin_shell_screen.dart';
 import '../../admin/admin_services_screen.dart';
 import '../../admin/admin_products_screen.dart';
 import '../../admin/admin_users_screen.dart';
+import '../../admin/admin_trash_screen.dart';
 
 class AppRouter {
   static const welcome = '/';

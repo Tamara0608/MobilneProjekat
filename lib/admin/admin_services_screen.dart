@@ -1,10 +1,12 @@
+import 'dart:io'; 
 import 'package:flutter/material.dart';
-import '../services/services_data.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/service.dart';
+import '../../admin/admin_trash_screen.dart';
 
 class AdminServicesScreen extends StatefulWidget {
   const AdminServicesScreen({super.key});
-
   static const Color _bg = Color(0xFFFFF1F4);
 
   @override
@@ -12,10 +14,10 @@ class AdminServicesScreen extends StatefulWidget {
 }
 
 class _AdminServicesScreenState extends State<AdminServicesScreen> {
+  final CollectionReference _uslugeRef = FirebaseFirestore.instance.collection('usluge');
+
   @override
   Widget build(BuildContext context) {
-    final active = services.where((s) => !s.isDeleted).toList();
-
     return Scaffold(
       backgroundColor: AdminServicesScreen._bg,
       appBar: AppBar(
@@ -25,8 +27,10 @@ class _AdminServicesScreenState extends State<AdminServicesScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            onPressed: _openTrash,
-            tooltip: 'Korpa',
+            onPressed: () => Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (_) => const AdminTrashScreen())
+            ),
           ),
         ],
       ),
@@ -34,300 +38,164 @@ class _AdminServicesScreenState extends State<AdminServicesScreen> {
         onPressed: _addService,
         child: const Icon(Icons.add),
       ),
-      body: active.isEmpty
-          ? const Center(
-              child: Text(
-                'Nema ponuda.',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: active.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final s = active[index];
-                final realIndex = services.indexOf(s);
+      body: StreamBuilder<QuerySnapshot>(
+        stream: _uslugeRef.where('isDeleted', isEqualTo: false).snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) return Center(child: Text('Greška: ${snapshot.error}'));
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          
+          final docs = snapshot.data!.docs;
 
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: ListTile(
-                    leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        s.imagePath,
-                        width: 52,
-                        height: 52,
-                        fit: BoxFit.cover,
+          if (docs.isEmpty) {
+            return const Center(child: Text('Nema aktivnih usluga. Dodajte novu.'));
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: docs.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              final data = docs[index].data() as Map<String, dynamic>;
+              final docId = docs[index].id;
+              final String imagePath = data['imagePath'] ?? '';
+
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white, 
+                  borderRadius: BorderRadius.circular(18)
+                ),
+                child: ListTile(
+                leading:imagePath.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Builder(
+                            builder: (context) {
+                              // Provera da li je asset ili fajl sa telefona
+                              if (imagePath.startsWith('assets/')) {
+                                return Image.asset(
+                                  imagePath,
+                                  width: 50, height: 50, fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => const Icon(Icons.broken_image),
+                                );
+                              }
+                              
+                              final file = File(imagePath);
+                              if (file.existsSync()) {
+                                return Image.file(
+                                  file,
+                                  width: 50, height: 50, fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => const Icon(Icons.broken_image),
+                                );
+                              }
+                              
+                              return const Icon(Icons.image_not_supported, color: Colors.grey);
+                            },
+                          ),
+                        )
+                      : const Icon(Icons.image, color: Colors.grey),
+                  title: Text(data['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.w900)),
+                  subtitle: Text('${data['priceRsd']} RSD • ${data['duration'] ?? 'Nema trajanja'}'),
+                  trailing: Wrap(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined), 
+                        onPressed: () => _editService(docId, data)
                       ),
-                    ),
-                    title: Text(
-                      s.title,
-                      style: const TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                    subtitle: Text('${_formatPrice(s.priceRsd)} • ${s.duration}'),
-                    trailing: Wrap(
-                      spacing: 6,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined),
-                          onPressed: () => _editService(realIndex),
-                          tooltip: 'Izmeni',
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: () => _softDelete(realIndex),
-                          tooltip: 'Obriši',
-                        ),
-                      ],
-                    ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: () => _uslugeRef.doc(docId).update({'isDeleted': true}),
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
-  }
-
-  void _softDelete(int index) {
-    setState(() {
-      services[index].isDeleted = true;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Ponuda je premeštena u korpu.')),
-    );
-  }
-
-  void _openTrash() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const AdminTrashScreen()),
-    );
-    if (!mounted) return;
-    setState(() {});
-  }
-
-  String _formatPrice(int rsd) {
-    final str = rsd.toString();
-    final buf = StringBuffer();
-    for (int i = 0; i < str.length; i++) {
-      final posFromEnd = str.length - i;
-      buf.write(str[i]);
-      if (posFromEnd > 1 && posFromEnd % 3 == 1) buf.write('.');
-    }
-    return '${buf.toString()} RSD';
   }
 
   void _addService() async {
     final created = await _openServiceDialog(context, title: 'Dodaj ponudu');
     if (created == null) return;
-
-    setState(() {
-      services.add(created);
+    await _uslugeRef.add({
+      'title': created.title,
+      'description': created.description,
+      'priceRsd': created.priceRsd,
+      'duration': created.duration,
+      'imagePath': created.imagePath,
+      'isDeleted': false,
     });
   }
 
-  void _editService(int index) async {
-    final current = services[index];
-    final updated = await _openServiceDialog(
-      context,
-      title: 'Izmeni ponudu',
-      initial: current,
+  void _editService(String id, Map<String, dynamic> data) async {
+    final current = Service(
+      title: data['title'] ?? '',
+      description: data['description'] ?? '',
+      priceRsd: data['priceRsd'] ?? 0,
+      duration: data['duration'] ?? '',
+      imagePath: data['imagePath'] ?? '',
     );
+    final updated = await _openServiceDialog(context, title: 'Izmeni ponudu', initial: current);
     if (updated == null) return;
-
-    setState(() {
-      services[index] = updated;
+    await _uslugeRef.doc(id).update({
+      'title': updated.title,
+      'description': updated.description,
+      'priceRsd': updated.priceRsd,
+      'duration': updated.duration,
+      'imagePath': updated.imagePath,
     });
   }
 
-  Future<Service?> _openServiceDialog(
-    BuildContext context, {
-    required String title,
-    Service? initial,
-  }) async {
-    final formKey = GlobalKey<FormState>();
-
+  Future<Service?> _openServiceDialog(BuildContext context, {required String title, Service? initial}) async {
     final titleCtrl = TextEditingController(text: initial?.title ?? '');
     final descCtrl = TextEditingController(text: initial?.description ?? '');
-    final priceCtrl = TextEditingController(
-      text: initial != null ? initial.priceRsd.toString() : '',
-    );
-    final durationCtrl = TextEditingController(text: initial?.duration ?? '');
-    final imageCtrl = TextEditingController(text: initial?.imagePath ?? '');
+    final priceCtrl = TextEditingController(text: initial?.priceRsd.toString() ?? '');
+    final durCtrl = TextEditingController(text: initial?.duration ?? '');
+    String currentPath = initial?.imagePath ?? '';
 
     return showDialog<Service>(
       context: context,
-      builder: (_) {
-        return AlertDialog(
-          title: Text(title),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: titleCtrl,
-                    decoration: const InputDecoration(labelText: 'Naziv'),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Obavezno' : null,
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: descCtrl,
-                    maxLines: 2,
-                    decoration: const InputDecoration(labelText: 'Opis'),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Obavezno' : null,
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: priceCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Cena (RSD)'),
-                    validator: (v) {
-                      final t = (v ?? '').trim();
-                      final p = int.tryParse(t);
-                      if (p == null || p <= 0) return 'Unesi broj > 0';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: durationCtrl,
-                    decoration: const InputDecoration(labelText: 'Trajanje'),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Obavezno' : null,
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: imageCtrl,
-                    decoration: const InputDecoration(labelText: 'Putanja slike'),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Obavezno' : null,
-                  ),
-                ],
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Naziv')),
+              TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Opis')),
+              TextField(controller: priceCtrl, decoration: const InputDecoration(labelText: 'Cena (RSD)'), keyboardType: TextInputType.number),
+              TextField(controller: durCtrl, decoration: const InputDecoration(labelText: 'Trajanje')),
+              const SizedBox(height: 15),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final ImagePicker picker = ImagePicker();
+                  final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                  if (image != null) {
+                    currentPath = image.path;
+                  }
+                },
+                icon: const Icon(Icons.image),
+                label: const Text('Izaberi sliku iz galerije'),
               ),
-            ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Otkaži'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (!formKey.currentState!.validate()) return;
-
-                final result = Service(
-                  title: titleCtrl.text.trim(),
-                  description: descCtrl.text.trim(),
-                  priceRsd: int.parse(priceCtrl.text.trim()),
-                  duration: durationCtrl.text.trim(),
-                  imagePath: imageCtrl.text.trim(),
-                  isDeleted: initial?.isDeleted ?? false,
-                );
-
-                Navigator.pop(context, result);
-              },
-              child: const Text('Sačuvaj'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class AdminTrashScreen extends StatefulWidget {
-  const AdminTrashScreen({super.key});
-
-  static const Color _bg = Color(0xFFFFF1F4);
-
-  @override
-  State<AdminTrashScreen> createState() => _AdminTrashScreenState();
-}
-
-class _AdminTrashScreenState extends State<AdminTrashScreen> {
-  @override
-  Widget build(BuildContext context) {
-    final trash = services.where((s) => s.isDeleted).toList();
-
-    return Scaffold(
-      backgroundColor: AdminTrashScreen._bg,
-      appBar: AppBar(
-        backgroundColor: AdminTrashScreen._bg,
-        elevation: 0,
-        title: const Text('Korpa'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Otkaži')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, Service(
+              title: titleCtrl.text,
+              description: descCtrl.text,
+              priceRsd: int.tryParse(priceCtrl.text) ?? 0,
+              duration: durCtrl.text,
+              imagePath: currentPath,
+            )),
+            child: const Text('Sačuvaj'),
+          ),
+        ],
       ),
-      body: trash.isEmpty
-          ? const Center(
-              child: Text(
-                'Korpa je prazna.',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: trash.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final s = trash[index];
-                final realIndex = services.indexOf(s);
-
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: ListTile(
-                    leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        s.imagePath,
-                        width: 52,
-                        height: 52,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    title: Text(
-                      s.title,
-                      style: const TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                    subtitle: Text('${s.priceRsd} RSD • ${s.duration}'),
-                    trailing: Wrap(
-                      spacing: 6,
-                      children: [
-                        TextButton(
-                          onPressed: () => _restore(realIndex),
-                          child: const Text('Vrati'),
-                        ),
-                        TextButton(
-                          onPressed: () => _deleteForever(realIndex),
-                          child: const Text('Trajno'),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
     );
-  }
-
-  void _restore(int index) {
-    setState(() {
-      services[index].isDeleted = false;
-    });
-  }
-
-  void _deleteForever(int index) {
-    setState(() {
-      services.removeAt(index);
-    });
   }
 }
