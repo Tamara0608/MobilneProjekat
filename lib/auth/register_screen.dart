@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../core/router/app_router.dart';
 import '../core/session/app_session.dart';
 import '../services/guest_home_screen.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -25,6 +26,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _obscure = true;
   bool _obscure2 = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -50,6 +52,58 @@ class _RegisterScreenState extends State<RegisterScreen> {
         RegExp(r'[!@#$%^&*(),.?":{}|<>_\-\\/\[\]~`+=;]').hasMatch(pass);
 
     return pass.length >= 8 && hasUpper && hasLower && hasDigit && hasSpecial;
+  }
+
+  Future<void> _handleRegister() async {
+    FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      //  Kreiranje korisnika u Firebase Auth
+      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailCtrl.text.trim(),
+        password: _passCtrl.text.trim(),
+      );
+
+      final uid = userCredential.user?.uid;
+      if (uid == null) throw Exception("Greška pri registraciji.");
+
+      // Kreiranje dokumenta u Firestore 'users' kolekciji
+      
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'uid': uid,
+        'firstName': _firstNameCtrl.text.trim(),
+        'lastName': _lastNameCtrl.text.trim(),
+        'email': _emailCtrl.text.trim(),
+        'city': _cityCtrl.text.trim(),
+        'role': 'user',        // Svaki novi je običan korisnik
+        'status': 'aktivan',    // Početni status
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // Postavljanje lokalne sesije
+      AppSession.login(
+        UserRole.user,
+        userEmail: _emailCtrl.text.trim(),
+        name: _firstNameCtrl.text.trim(),
+      );
+
+      // Navigacija dalje
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const GuestHomeScreen(isGuest: false)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -170,15 +224,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       validator: (value) {
                         final v = value ?? '';
                         if (v.isEmpty) return 'Potvrda lozinke je obavezna';
-
-                        final pass = _passCtrl.text;
-                        if (!_isStrongPassword(pass)) return null;
-
-                        if (v != pass) return 'Lozinke se ne poklapaju';
+                        if (v != _passCtrl.text) return 'Lozinke se ne poklapaju';
                         return null;
                       },
                     ),
                     const SizedBox(height: 12),
+
                     TextFormField(
                       controller: _cityCtrl,
                       decoration: _inputDecoration('Grad'),
@@ -196,38 +247,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
-                       onPressed: () {
-                        FocusScope.of(context).unfocus();
-                        if (_formKey.currentState!.validate()) {
-
-                          AppSession.login( //prijavljuje korisnika
-                            UserRole.user,
-                            userEmail: _emailCtrl.text.trim(),
-                            name: _firstNameCtrl.text.trim(),
-                          );
-
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const GuestHomeScreen(isGuest: false),
-                            ),
-                          );
-                        }
-                      },
-
+                       onPressed: _isLoading ? null : _handleRegister, // Poziva Firebase logiku
                         style: ElevatedButton.styleFrom(
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(18),
                           ),
                         ),
-                        child: const Text(
-                          'Registruj se',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
+                        child: _isLoading 
+                          ? const SizedBox(
+                              height: 20, 
+                              width: 20, 
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                            ) 
+                          : const Text(
+                              'Registruj se',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                       ),
                     ),
 

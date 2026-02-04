@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "283725776424",
+    "project_id": "smartbooking-e11dd",
+    "storage_bucket": "smartbooking-e11dd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:283725776424:android:6e55683dbaea55ef61571d",
+        "android_client_info": {
+          "package_name": "com.example.smartbooking"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCg_yLh9NXExFsblPCLWrBYDloPeVo_38Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../core/router/app_router.dart';
 import '../core/session/app_session.dart';
-import '../services/guest_home_screen.dart'; 
+import '../services/guest_home_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -24,6 +26,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passCtrl = TextEditingController();
 // da li je lozinka skrivena
   bool _obscure = true;
+  bool _isLoading = false;
+
 //cisti memoriju
   @override
   void dispose() {
@@ -155,67 +159,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: () {
-                          
-                          FocusScope.of(context).unfocus();
-                          if (_formKey.currentState!.validate()) {
-                           
-                           final email = _emailCtrl.text.trim();
-                            UserRole role = UserRole.user;
-                            if (email.toLowerCase() == 'admin@smartbooking.rs') role = UserRole.admin;
-                            if (email.toLowerCase() == 'zaposleni@smartbooking.rs') role = UserRole.employee;
-                             
-                          AppSession.login(
-                            role,
-                            userEmail: email,
-                            name: 'Tamara',
-                          );
-
-                          if (role == UserRole.admin) {
-                            Navigator.pushReplacementNamed(context, AppRouter.adminHome);
-                          } else {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const GuestHomeScreen(isGuest: false),
-                              ),
-                            );
-                          }
-
-                          }        
-                       },
+                        onPressed: _isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
                           elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                         ),
-                        child: const Text(
-                          'Prijavi se',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
+                        child: _isLoading 
+                          ? const CircularProgressIndicator() 
+                          : const Text('Prijavi se', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                       ),
                     ),
 
                     const SizedBox(height: 14),
 
-                    //link za reg
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text('Nemaš nalog? '),
                         GestureDetector(
-                          onTap: () =>
-                              Navigator.pushNamed(context, AppRouter.register),
+                          onTap: () => Navigator.pushNamed(context, AppRouter.register),
                           child: const Text(
                             'Registruj se',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              decoration: TextDecoration.underline,
-                            ),
+                            style: TextStyle(fontWeight: FontWeight.w900, decoration: TextDecoration.underline),
                           ),
                         ),
                       ],
@@ -230,28 +195,107 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-InputDecoration _inputDecoration(String hint, {Widget? suffix}) {
-  return InputDecoration(
-    hintText: hint,
-    suffixIcon: suffix,
-    filled: true,
-    fillColor: const Color(0xFFFFF8FA),
+ Future<void> _handleLogin() async {
+    FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate()) return;
 
-  
-    errorMaxLines: 3,
+    setState(() => _isLoading = true);
 
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(
-        color: Colors.black.withValues(alpha: 0.08),
+    try {
+      //  Prijava na Firebase Auth
+      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailCtrl.text.trim(),
+        password: _passCtrl.text,
+      );
+
+      final uid = userCredential.user?.uid;
+      if (uid == null) throw Exception('Greška pri dobijanju UID-a.');
+
+      //  Preuzimanje podataka iz Firestore-a
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+      if (!userDoc.exists) {
+        await FirebaseAuth.instance.signOut();
+        throw 'Korisnik ne postoji u bazi.';
+      }
+
+      final data = userDoc.data()!;
+      final String roleStr = data['role'] ?? 'user';
+      final String status = data['status'] ?? 'aktivan';
+
+      // Provera statusa
+      if (status == 'neaktivan') {
+        await FirebaseAuth.instance.signOut();
+        throw 'Vaš nalog je deaktiviran. Kontaktirajte admina.';
+      }
+
+      // Uloge
+      UserRole role = UserRole.user;
+      if (roleStr == 'admin') role = UserRole.admin;
+      if (roleStr == 'employee') role = UserRole.employee;
+
+      //Sesija
+      AppSession.login(
+        role,
+        userEmail: data['email'] ?? _emailCtrl.text,
+        name: data['firstName'] ?? 'Korisnik',
+      );
+
+      //  Navigacija
+      if (!mounted) return;
+      if (role == UserRole.admin) {
+        Navigator.pushReplacementNamed(context, AppRouter.adminHome);
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const GuestHomeScreen(isGuest: false)),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      String poruka = 'Pogrešan email ili lozinka.';
+
+      if (e is FirebaseAuthException) {
+        if (e.code == 'user-disabled') {
+          poruka = 'Vaš nalog je deaktiviran.';
+        } else if (e.code == 'too-many-requests') {
+          poruka = 'Previše pokušaja. Pokušajte kasnije.';
+        }
+      } else {
+        poruka = e.toString();
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(poruka),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+  InputDecoration _inputDecoration(String hint, {Widget? suffix}) {
+    return InputDecoration(
+      hintText: hint,
+      suffixIcon: suffix,
+      filled: true,
+      fillColor: const Color(0xFFFFF8FA),
+      errorMaxLines: 3,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
       ),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(
-        color: Colors.black.withValues(alpha: 0.08),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
       ),
-    ),
-  );
-}
+    );
+  }
 }
