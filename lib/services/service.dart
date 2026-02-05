@@ -1,4 +1,5 @@
 class Service {
+  final String id;
   final String title;
   final String imagePath;
   final String description;
@@ -8,6 +9,7 @@ class Service {
   bool isDeleted;
 
   Service({
+  required this.id,
   required this.title,
   required this.imagePath,
   required this.description,

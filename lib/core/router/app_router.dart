@@ -7,7 +7,6 @@ import '../../services/guest_home_screen.dart';
 
 import '../../admin/admin_shell_screen.dart';
 import '../../admin/admin_services_screen.dart';
-import '../../admin/admin_products_screen.dart';
 import '../../admin/admin_users_screen.dart';
 import '../../admin/admin_trash_screen.dart';
 
@@ -31,7 +30,6 @@ class AppRouter {
     editProfile: (context) => const EditProfileScreen(),
     adminHome: (_) => const AdminShellScreen(),
     adminServices: (_) => const AdminServicesScreen(),
-    adminProducts: (_) => const AdminProductsScreen(),
     adminUsers: (_) => const AdminUsersScreen(),
     AppRouter.adminTrash: (_) => const AdminTrashScreen(),
 

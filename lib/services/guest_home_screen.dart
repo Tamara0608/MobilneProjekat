@@ -105,6 +105,7 @@ class _PonudeTab extends StatelessWidget {
         final visibleServices = docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
           return Service(
+            id: doc.id,
             title: data['title'] ?? '',
             description: data['description'] ?? '',
             priceRsd: data['priceRsd'] ?? 0,
