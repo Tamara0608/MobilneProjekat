@@ -220,14 +220,18 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       final data = userDoc.data()!;
-      final String roleStr = data['role'] ?? 'user';
-      final String status = data['status'] ?? 'aktivan';
+      final String roleStr =
+          (data['role'] ?? 'user').toString().trim().toLowerCase();
 
-      // Provera statusa
+      final String status =
+          (data['status'] ?? 'aktivan').toString().trim().toLowerCase();
+
+      // Provera statusa 
       if (status == 'neaktivan') {
         await FirebaseAuth.instance.signOut();
         throw 'Vaš nalog je deaktiviran. Kontaktirajte admina.';
       }
+
 
       // Uloge
       UserRole role = UserRole.user;
@@ -263,7 +267,7 @@ class _LoginScreenState extends State<LoginScreen> {
           poruka = 'Previše pokušaja. Pokušajte kasnije.';
         }
       } else {
-        poruka = e.toString();
+        poruka =  e is String ? e : e.toString();
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
