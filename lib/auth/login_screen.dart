@@ -236,15 +236,13 @@ class _LoginScreenState extends State<LoginScreen> {
       // Uloge
       UserRole role = UserRole.user;
       if (roleStr == 'admin') role = UserRole.admin;
-      if (roleStr == 'employee') role = UserRole.employee;
 
-      //Sesija
-      AppSession.login(
-        role,
-        userEmail: data['email'] ?? _emailCtrl.text,
-        name: data['firstName'] ?? 'Korisnik',
-      );
-
+    AppSession.login(
+      newRole: role,
+      userUid: uid,
+      userEmail: (data['email'] ?? _emailCtrl.text).toString(),
+      name: (data['firstName'] ?? 'Korisnik').toString(),
+    );
       //  Navigacija
       if (!mounted) return;
       if (role == UserRole.admin) {

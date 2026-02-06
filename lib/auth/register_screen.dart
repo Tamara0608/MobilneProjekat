@@ -63,8 +63,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       //  Kreiranje korisnika u Firebase Auth
       final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailCtrl.text.trim(),
-        password: _passCtrl.text.trim(),
+        email: _emailCtrl.text,
+        password: _passCtrl.text,
       );
 
       final uid = userCredential.user?.uid;
@@ -85,7 +85,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       // Postavljanje lokalne sesije
       AppSession.login(
-        UserRole.user,
+        newRole: UserRole.user,
+         userUid: uid,
         userEmail: _emailCtrl.text.trim(),
         name: _firstNameCtrl.text.trim(),
       );
